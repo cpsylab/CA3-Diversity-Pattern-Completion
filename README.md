@@ -7,4 +7,10 @@ Code for the paper *The Impact of Electrophysiological Diversity on Pattern Comp
 - `main.jl`: Primary script for running the experiments 
 - `ca3.jl`: Functions defining network, encoding, and retrieval operations
 
+## Running 
+
+``` 
+julia --project --threads NTHREADS main.jl
+```
+
 

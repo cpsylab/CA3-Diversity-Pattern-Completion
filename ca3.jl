@@ -27,7 +27,7 @@
 #       sparse associative memory. Neural Networks. 1992;5(4):645-661.
 ################################################################################
 using Parameters, DataFrames
-using Tullio, Parameters, Pipe
+using Tullio, Pipe
 using Distributions, Random, Statistics
 
 @with_kw struct NetworkParams 

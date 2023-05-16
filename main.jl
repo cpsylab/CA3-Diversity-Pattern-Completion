@@ -1,7 +1,8 @@
+using Base.Threads
 using CSV, StableRNGs, Plots, LaTeXStrings, StatsPlots
 include("ca3.jl")
 
-const rng = StableRNG(326)
+const rng = [StableRNG(326) for i in Threads.nthreads()]
 
 # Set parameter ranges for experiments
 const ms = 5:5:70
@@ -11,14 +12,15 @@ const μgs = [0.1, 0.2, 0.25, 0.3, 0.35, 0.4]
 const σgs = [0., 0.05, 0.1, 0.2]
 
 # Function to create iterator over parameters 
-param_iter(ms, μgs, σgs) = Iterators.product(ms, μgs, σgs) |> collect |> vec 
+param_iter(pars) = Iterators.product(pars...) |> collect |> vec 
 
 # Run the simulation for a given set of parameters
-for m ∈ ms
+println("Starting Simulation")
+@threads for m ∈ ms
     println("Running m = $m")
     df = @pipe [
-            run_sim(run, NetworkParams(n=1000, m=m, a=a, c=c, g1=g1, g1_std=g1_std); rng=rng) 
-            for (run, (a, c, g1, g1_std)) in enumerate(param_iter(as, cs, μgs, σgs))] |> 
+                run_sim(run, NetworkParams(n=3000, nT=10, m=m, a=a, c=c, g1=g1, g1_std=g1_std); rng=rng[i]) 
+            for (run, (a, c, g1, g1_std)) in enumerate(param_iter([as, cs, μgs, σgs]))] |> 
         vcat(_...)
 
     # Write the dataframe to file 
