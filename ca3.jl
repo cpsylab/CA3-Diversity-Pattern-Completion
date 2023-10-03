@@ -211,6 +211,8 @@ end
         - X: Matrix. Initial state of the network.
         - Tprime: Matrix. Initial firing times of the network.
         - rng: Random number generator.
+        - return_patterns: Bool. Whether to return the time series of the network's patterns or not. 
+            If `true`, will also return the inhibition levels 
 
     Returns: 
         - act_corrs: Matrix. Correlation between the network's activity and the ground-truth patterns.
@@ -219,9 +221,7 @@ end
         - false_alarm_rates: Matrix. False alarm rates of the network over time (rows) and patterns (columns)
         - d_primes: Matrix. d' values of the network over time (rows) and patterns (columns)
 """
-
-
-function run_dynamics(params::NetworkParams, Z::Matrix, T::Matrix, WJ::Matrix, X::Matrix, Tprime::Matrix; rng=rng)
+function run_dynamics(params::NetworkParams, Z::Matrix, T::Matrix, WJ::Matrix, X::Matrix, Tprime::Matrix; rng=rng, return_patterns=false)
     @unpack m, n, nT, g0, g1, g1_std, tau3 = params
     
     # Initialize inhibition scaling based on whether it is fixed or variable
@@ -237,12 +237,14 @@ function run_dynamics(params::NetworkParams, Z::Matrix, T::Matrix, WJ::Matrix, X
 
     # Initialize matrices to store results
     tmpT = Tprime
-    tmpT[findall(!isfinite, tmpT)] .= NaN
+    tmpT[findall(!isfinite, tmpT)] .= NaN 
     temp_corrs=zeros(nT+1,m)
     act_corrs=zeros(nT+1,m)
     hit_rates=zeros(nT+1,m)
     false_alarm_rates=zeros(nT+1,m)
     d_primes=zeros(nT+1,m)
+    X_series = []
+    Tprime_series = []
 
     # Get initial values of correlations, hit rates, false alarm rates, and d'
     temp_corrs[1,:] = getcorr(tmpT, T)
@@ -256,7 +258,7 @@ function run_dynamics(params::NetworkParams, Z::Matrix, T::Matrix, WJ::Matrix, X
         tmpT = fill(Inf, size(X))
         total_inhibition = sum(X, dims=2) # recalculate threshold
 
-        f = 1:m
+        #f = 1:m
         for i ∈ 1:m
             for j ∈ 1:n
                 begin
@@ -276,13 +278,13 @@ function run_dynamics(params::NetworkParams, Z::Matrix, T::Matrix, WJ::Matrix, X
                             tmpT[i, j] = sortedT[l] # first time f > θ
                             break
                         end
-                    # end
                 end
             end 
         end 
 
         # Update activity of neurons
         X = (tmpT .< Inf) .|> Float64
+        push!(X_series, X)
 
         # Correlation of before vs after iteration
         temp_corrs[k+1,:] = getcorr(tmpT, T) 
@@ -294,11 +296,15 @@ function run_dynamics(params::NetworkParams, Z::Matrix, T::Matrix, WJ::Matrix, X
         
         # Update firing times
         Tprime = tmpT
+        push!(Tprime_series, Tprime)
     end 
 
-    return act_corrs, temp_corrs, hit_rates, false_alarm_rates, d_primes
+    if return_patterns
+        return act_corrs, temp_corrs, hit_rates, false_alarm_rates, d_primes, X_series, Tprime_series, g_inhib
+    else 
+        return act_corrs, temp_corrs, hit_rates, false_alarm_rates, d_primes
+    end
 end
-
 
 # -----------------------------------------------------------------------------
 # SIMULATION FUNCTIONS
