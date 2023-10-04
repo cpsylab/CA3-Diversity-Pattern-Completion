@@ -42,8 +42,6 @@ for g1 ∈ [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
     push!(hherrres, res_)
 end
 
-hherrres
-
 ps = []
 for (i,g1) ∈ enumerate([0.1, 0.2, 0.3, 0.4, 0.5, 0.6])
     hres = hherrres[i]
