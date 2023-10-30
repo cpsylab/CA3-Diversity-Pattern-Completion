@@ -19,4 +19,5 @@ julia --project --threads NTHREADS hypervshyposim.jl
 julia --project analysis.jl
 ```
 
+To obtain the figures in the paper, chag
 
